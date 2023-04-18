@@ -22,7 +22,7 @@ class StringToArrayConverter
         return array_map('str_getcsv', explode("\n", $csv));
     }
 
-    public static function convert(string $conversionRates, $type = ''): array
+    public static function convert(string $conversionRates, string $type = ''): array
     {
         if (empty($conversionRates) || (!in_array($type, ['json', 'xml', 'csv', '']))) {
             return [];
