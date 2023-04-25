@@ -22,6 +22,21 @@ class StringToArrayConverter
         return array_map('str_getcsv', explode("\n", $csv));
     }
 
+    private function detectType(string $data): string
+    {
+        if (json_decode($data, true) && json_last_error() === JSON_ERROR_NONE) {
+            return 'json';
+        }
+
+        if (simplexml_load_string($data) !== false) {
+            return 'xml';
+        }
+
+        // returning csv if not json or xml
+        // csv validation will be required if the data is coming from unreliable sources
+        return 'csv';
+    }
+
     public static function convert(string $conversionRates, string $type = ''): array
     {
         if (empty($conversionRates) || (!in_array($type, ['json', 'xml', 'csv', '']))) {
@@ -30,26 +45,14 @@ class StringToArrayConverter
 
         $instance = new self();
 
-        if (!empty($type)) {
-            $function = $type . 'ToArray';
-            if ($type === 'xml') {
-                $conversionRates = simplexml_load_string($conversionRates);
-            }
-            return $instance->{$function}($conversionRates);
+        if (empty($type)) {
+            $type = $instance->detectType($conversionRates);
+        }
+        $function = $type . 'ToArray';
+        if ($type === 'xml') {
+            $conversionRates = simplexml_load_string($conversionRates);
         }
 
-        $json = json_decode($conversionRates, true);
-        if (json_last_error() === JSON_ERROR_NONE) {
-            return $json;
-        }
-
-        $xml = simplexml_load_string($conversionRates);
-        if ($xml !== false) {
-            return $instance->xmlToArray($xml);
-        }
-
-        // returning csv if not json or xml
-        // csv validation will be required if the data is coming from unreliable sources
-        return $instance->csvToArray($conversionRates);
+        return $instance->{$function}($conversionRates);
     }
 }
